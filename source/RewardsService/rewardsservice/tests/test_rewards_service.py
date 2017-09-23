@@ -214,7 +214,24 @@ class TestRewardsService(unittest.TestCase):
   Return rewards data for all customers
   '''
   def test_get_all_customer_rewards(self):
-      pass
+      client = MongoClient()
+      db = client['Customers']
+
+      db.Customers.insert({"email" : "email1@test.com", "points" : 100, "tier" : "A", "tier_name" : "5% off purchase",
+                           "next_tier" : "B", "next_tier_name" : "10% off purchase", "next_tier_progress" : 0.5 })
+      db.Customers.insert({"email" : "email2@test.com", "points" : 100, "tier" : "A", "tier_name" : "5% off purchase",
+                           "next_tier" : "B", "next_tier_name" : "10% off purchase", "next_tier_progress" : 0.5 })
+      db.Customers.insert({"email" : "email3@test.com", "points" : 100, "tier" : "A", "tier_name" : "5% off purchase",
+                           "next_tier" : "B", "next_tier_name" : "10% off purchase", "next_tier_progress" : 0.5 })
+
+      req = requests.get(API_URL + "/customer/get_all")
+      response = req.json()
+
+      self.assertEqual(req.status_code, 200)
+      self.assertEqual(len(response), 3)
+      self.assertIsNotNone(response.get('email1@test.com', None))
+      self.assertIsNotNone(response.get('email2@test.com', None))
+      self.assertIsNotNone(response.get('email3@test.com', None))
 
 
   def tearDown(self):
