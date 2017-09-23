@@ -1,77 +1,83 @@
 <html>
 <head>
+    <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
+    <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap-theme.min.css">
 </head>
 <body>
     <h1>Welcome to the Rewards Dashboard</h1>
-    <div>
-        <h2>Reward Tiers</h2>
-        <table border="1">
-            <tr>
-                <th>Rewards Tier<th>
-                <th>Reward Points</th>
-                <th>Rewards Tier Name</th>
-            </tr>
-            {% for reward in rewards_data %}
-                <tr>
-                    <td>{{ reward.tier }}<td>
-                    <td>{{ reward.points }}</td>
-                    <td>{{ reward.rewardName }}</td>
-                </tr>
-            {% endfor %}
-        </table>
-        <hr>
-    </div>
-    <div>
-        <h2>Add Orders</h2>
-        <form action="/rewards/" method="post">
-            {% csrf_token %}
-            {{ order_form }}
-            <input type="submit" name="order-button" value="Submit Order"/>
-        </form>
-        <hr>
-    </div>
-    <div>
-        <h2>User Rewards</h2>
-        <form action="/rewards/" method="post">
-            {% csrf_token %}
-            {{ search_form }}
-            <input type="submit" name="search-button" value="Search"/>
-        </form>
-        {% if search_error %}
-            <p>{{ search_error.message }}</p>
-        {% else %}
-            <table border="1">
-                <thead>
-                <tr>
-                    <th>Email Address</th>
-                    <th>Reward Points</th>
-                    <th>Reward Tier</th>
-                    <th>Reward Tier Name</th>
-                    <th>Next Reward Tier</th>
-                    <th>Next Reward Tier Name</th>
-                    <th>Next Reward Tier Progress</th>
-                </tr>
-                </thead>
-                <tbody>
-                  {% for customer in customer_data %}
+    <div class="container">
+      <div class="row">
+            <h2>User Rewards</h2>
+            <form action="/rewards/" method="post">
+                    {% csrf_token %}
+                    {{ search_form }}
+                <button type="submit" class="btn btn-primary" name="search-button">Search</button>
+            </form>
+            {% if search_error %}
+                <p>{{ search_error.message }}</p>
+            {% else %}
+                <table class="table">
+                    <thead>
                     <tr>
-                        <td>{{ customer.email }}</td>
-                        <td>{{ customer.points }}</td>
-                        <td>{{ customer.tier }}</td>
-                        <td>{{ customer.tier_name }}</td>
-                        <td>{{ customer.next_tier }}</td>
-                        <td>{{ customer.next_tier_name }}</td>
-                        <td>{{ customer.next_tier_progress }}</td>
+                        <th>Email Address</th>
+                        <th>Reward Points</th>
+                        <th>Reward Tier</th>
+                        <th>Reward Tier Name</th>
+                        <th>Next Reward Tier</th>
+                        <th>Next Reward Tier Name</th>
+                        <th>Next Reward Tier Progress</th>
                     </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                      {% for customer in customer_data %}
+                        <tr>
+                            <td>{{ customer.email }}</td>
+                            <td>{{ customer.points }}</td>
+                            <td>{{ customer.tier }}</td>
+                            <td>{{ customer.tier_name }}</td>
+                            <td>{{ customer.next_tier }}</td>
+                            <td>{{ customer.next_tier_name }}</td>
+                            <td>{{ customer.next_tier_progress }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% endif %}
+        </div>
+        {% if show_reset_button %}
+        <form action="/rewards/" method="get">
+            <button type="submit" name="reset-button" class="btn btn-primary">Show All Users</button>
+        </form>
         {% endif %}
+        <div class="row">
+            <div class="col col-md-5">
+                <h2>Reward Tiers</h2>
+                <table class="table">
+                    <tr>
+                        <th>Rewards Tier<th>
+                        <th>Reward Points</th>
+                        <th>Rewards Tier Name</th>
+                    </tr>
+                    {% for reward in rewards_data %}
+                        <tr>
+                            <td>{{ reward.tier }}<td>
+                            <td>{{ reward.points }}</td>
+                            <td>{{ reward.rewardName }}</td>
+                        </tr>
+                    {% endfor %}
+                </table>
+                <hr>
+            </div>
+            <div class="col col-md-7">
+                <h2>Add Orders</h2>
+                <form action="/rewards/" method="post">
+                    {% csrf_token %}
+                    {{ order_form }}
+                    <button type="submit" class="btn btn-primary" name="order-button">Submit Order</button>
+                </form>
+                <hr>
+            </div>
+        </div>
     </div>
-    {% if show_reset_button %}
-    <form action="/rewards/" method="get">
-        <input type="submit" name="reset-button" value="Show All Users"/>
-    </form>
-    {% endif %}
 </body>
 </html>
