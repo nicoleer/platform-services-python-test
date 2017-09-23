@@ -23,9 +23,10 @@
     </div>
     <div>
         <h2>Add orders</h2>
-        <form>
-            <label>Enter email address: </label><input type="text"/><br>
-            <label>Enter order total: </label><input type="text"/><input type="button" value="Submit Order"/>
+        <form action="/rewards/" method="post">
+            {% csrf_token %}
+            {{ order_form }}
+            <input type="submit" value="Submit Order"/>
         </form>
         <hr>
     </div>
@@ -47,8 +48,8 @@
             </tr>
             </thead>
             <tbody>
-                <tr>
                 {% for customer in customer_data %}
+                <tr>
                     <td>{{ customer.email }}</td>
                     <td>{{ customer.points }}</td>
                     <td>{{ customer.tier }}</td>
