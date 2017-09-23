@@ -68,5 +68,10 @@
             </table>
         {% endif %}
     </div>
+    {% if show_reset_button %}
+    <form action="/rewards/" method="get">
+        <input type="submit" name="reset-button" value="Show All Users"/>
+    </form>
+    {% endif %}
 </body>
 </html>

@@ -11,7 +11,6 @@ from .forms import SearchForm
 class RewardsView(TemplateView):
     template_name = 'index.html'
     rewards = requests.get("http://rewardsservice:7050/rewards").json()
-    search_error = None
 
     def __init__(self, logger=logging.getLogger(__name__)):
         self.logger = logger
@@ -26,6 +25,7 @@ class RewardsView(TemplateView):
 
         all_customers_response = requests.get("http://rewardsservice:7050/customer/get_all")
         context['customer_data'] = all_customers_response.json()
+        context['show_reset_button'] = False
 
         return TemplateResponse(
             request,
@@ -64,6 +64,9 @@ class RewardsView(TemplateView):
                 context['order_form'] = OrderForm()
                 context['search_form'] = SearchForm()
                 context['rewards_data'] = self.rewards
+
+                # Show button to return to full user list
+                context['show_reset_button'] = True
 
                 return TemplateResponse(
                     request,
