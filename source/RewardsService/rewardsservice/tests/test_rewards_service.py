@@ -6,6 +6,8 @@ from pymongo import MongoClient
 API_URL = "http://localhost:7050"
 EMAIL = "test@test.com"
 
+# TODO(nicole): use a testing database
+
 class TestRewardsService(unittest.TestCase):
 
   @classmethod
@@ -117,8 +119,8 @@ class TestRewardsService(unittest.TestCase):
   '''
   def test_set_existing_customer_rewards(self):
       client = MongoClient()
-      db = client['Customers']
-      db.Customers.insert(
+      db = client['Rewards']
+      db.customers.insert(
                     { "email" : EMAIL,
                       "points" : 100,
                       "tier" : "A",
@@ -128,7 +130,7 @@ class TestRewardsService(unittest.TestCase):
                       "next_tier_progress" : 0.5 
                     }
       )
-      existing_customer = db.Customers.find_one({'email': EMAIL})
+      existing_customer = db.customers.find_one({'email': EMAIL})
 
       self.assertIsNotNone(existing_customer)
 
@@ -179,8 +181,8 @@ class TestRewardsService(unittest.TestCase):
   '''
   def test_get_customer_rewards(self):
       client = MongoClient()
-      db = client['Customers']
-      db.Customers.insert(
+      db = client['Rewards']
+      db.customers.insert(
                     { "email" : EMAIL,
                       "points" : 100,
                       "tier" : "A",
@@ -190,7 +192,7 @@ class TestRewardsService(unittest.TestCase):
                       "next_tier_progress" : 0.5 
                     }
       )
-      existing_customer = db.Customers.find_one({'email': EMAIL})
+      existing_customer = db.customers.find_one({'email': EMAIL})
 
       self.assertIsNotNone(existing_customer)
 
@@ -230,39 +232,47 @@ class TestRewardsService(unittest.TestCase):
   '''
   def test_get_all_customer_rewards(self):
       client = MongoClient()
-      db = client['Customers']
+      db = client['Rewards']
 
-      db.Customers.insert({"email" : "email1@test.com", "points" : 100, "tier" : "A", "tier_name" : "5% off purchase",
+      db.customers.insert({"email" : "email1@test.com", "points" : 100, "tier" : "A", "tier_name" : "5% off purchase",
                            "next_tier" : "B", "next_tier_name" : "10% off purchase", "next_tier_progress" : 0.5 })
-      db.Customers.insert({"email" : "email2@test.com", "points" : 100, "tier" : "A", "tier_name" : "5% off purchase",
+      db.customers.insert({"email" : "email2@test.com", "points" : 100, "tier" : "A", "tier_name" : "5% off purchase",
                            "next_tier" : "B", "next_tier_name" : "10% off purchase", "next_tier_progress" : 0.5 })
-      db.Customers.insert({"email" : "email3@test.com", "points" : 100, "tier" : "A", "tier_name" : "5% off purchase",
+      db.customers.insert({"email" : "email3@test.com", "points" : 100, "tier" : "A", "tier_name" : "5% off purchase",
                            "next_tier" : "B", "next_tier_name" : "10% off purchase", "next_tier_progress" : 0.5 })
 
       req = requests.get(API_URL + "/customer/get_all")
       response = req.json()
 
       self.assertEqual(req.status_code, 200)
-      self.assertEqual(len(response), 3)
-      self.assertIsNotNone(response[0])
-      self.assertIsNotNone(response[1])
-      self.assertIsNotNone(response[2])
+
+      customer1 = db.customers.find_one({'email': "email1@test.com"})
+      customer2 = db.customers.find_one({'email': "email2@test.com"})
+      customer3 = db.customers.find_one({'email': "email3@test.com"})
+
+      self.assertIsNotNone(customer1)
+      self.assertIsNotNone(customer2)
+      self.assertIsNotNone(customer3)
+
+      # clean up test
+      # TODO(nicole): another reason to use test database
+      db.customers.delete_many({'email': "email1@test.com"})
+      db.customers.delete_many({'email': "email2@test.com"})
+      db.customers.delete_many({'email': "email3@test.com"})
 
 
   def tearDown(self):
       # if a record exists for test@testemail.com, remove it
       client = MongoClient()
-      db = client['Customers']
-      customer = db.Customers.find_one({'email': EMAIL})
+      db = client['Rewards']
+      customer = db.customers.find_one({'email': EMAIL})
       if customer != None:
-          db.Customers.delete_many({'email': EMAIL})
+          db.customers.delete_many({'email': EMAIL})
 
 
   @classmethod
   def tearDownClass(cls):
-      client = MongoClient()
-      db = client['Customers']
-      db.Customers.remove()
+      pass
 
 
 

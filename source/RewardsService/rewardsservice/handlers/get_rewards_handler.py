@@ -10,10 +10,10 @@ class GetRewardsHandler(tornado.web.RequestHandler):
     @coroutine
     def post(self):
         client = MongoClient('mongodb', 27017)
-        customer_db = client['Customers']
+        db = client['Rewards']
 
         email = self.get_argument('email', None)
-        customer  = customer_db.Customers.find_one({'email': email})
+        customer  = db.customers.find_one({'email': email})
 
         if customer is None:
             response = {

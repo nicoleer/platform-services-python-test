@@ -9,8 +9,8 @@ from tornado.gen import coroutine
 class SetRewardsHandler(tornado.web.RequestHandler):
 
     client = MongoClient('mongodb', 27017)
-    rewards_db = client['Rewards']
-    rewards = list(rewards_db.rewards.find({}, {'_id': 0}))
+    db = client['Rewards']
+    rewards = list(db.rewards.find({}, {'_id': 0}))
 
     highest_tier = max(tier['points'] for tier in rewards)
 
@@ -48,10 +48,9 @@ class SetRewardsHandler(tornado.web.RequestHandler):
         points = int(float(order_total))
 
         # update point total if the customer already exists
-        customer_db = self.client['Customers']
-        existing_customer = customer_db.Customers.find_one({'email': email})
+        existing_customer = self.db.customers.find_one({'email': email})
         if existing_customer:
-            points += existing_customer["points"]
+            points += existing_customer['points']
 
         current_tier = self.getTier(points)
         next_tier = self.getTier(current_tier['points'] + 100)
@@ -69,5 +68,7 @@ class SetRewardsHandler(tornado.web.RequestHandler):
                      "next_tier_name" : next_tier["rewardName"],
                      "next_tier_progress" : progress 
                    }
-        customer_db.Customers.update({'email': email}, customer)
+
+        # upsert=True required to insert a document if it doesn't already exist
+        self.db.customers.update({'email': email}, customer, upsert=True)
         self.write(customer)
