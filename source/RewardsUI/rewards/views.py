@@ -14,8 +14,11 @@ class RewardsView(TemplateView):
     def get(self, request, *args, **kwargs):
         context = self.get_context_data(**kwargs)
 
-        response = requests.get("http://rewardsservice:7050/rewards")
-        context['rewards_data'] = response.json()
+        rewards_response = requests.get("http://rewardsservice:7050/rewards")
+        context['rewards_data'] = rewards_response.json()
+
+        all_customers_response = requests.get("http://rewardsservice:7050/customer/get_all")
+        context['customer_data'] = all_customers_response.json()
 
         return TemplateResponse(
             request,
