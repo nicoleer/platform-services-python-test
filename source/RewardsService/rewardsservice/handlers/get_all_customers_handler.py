@@ -1,4 +1,4 @@
-from bson.json_util import dumps
+import json
 import tornado.web
 
 from pymongo import MongoClient
@@ -11,9 +11,6 @@ class GetAllCustomersHandler(tornado.web.RequestHandler):
     def get(self):
         client = MongoClient('mongodb', 27017)
         customer_db = client['Customers']
-        
-        customers_bson  = customer_db.Customers.find()
 
-        # reformat the list into a dictionary, with email as the keys
-        customers = dict((item['email'], item) for item in customers_bson)
-        self.write(dumps(customers))
+        customers = list(customer_db.customers.find({}, {"_id": 0}))
+        self.write(json.dumps(customers))

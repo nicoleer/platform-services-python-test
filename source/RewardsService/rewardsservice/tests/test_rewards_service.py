@@ -244,9 +244,9 @@ class TestRewardsService(unittest.TestCase):
 
       self.assertEqual(req.status_code, 200)
       self.assertEqual(len(response), 3)
-      self.assertIsNotNone(response.get('email1@test.com', None))
-      self.assertIsNotNone(response.get('email2@test.com', None))
-      self.assertIsNotNone(response.get('email3@test.com', None))
+      self.assertIsNotNone(response[0])
+      self.assertIsNotNone(response[1])
+      self.assertIsNotNone(response[2])
 
 
   def tearDown(self):
