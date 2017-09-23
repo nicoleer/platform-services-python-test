@@ -4,14 +4,12 @@ import unittest
 from pymongo import MongoClient
 
 API_URL = "http://localhost:7050"
+EMAIL = "test@test.com"
 
 class TestRewardsService(unittest.TestCase):
 
-  #TODO(nicole): Don't test using the real DB -- need to learn how this works
   @classmethod
   def setUpClass(cls):
-    # client = MongoClient()
-    # db = client['Rewards']
     pass
 
 
@@ -30,17 +28,16 @@ class TestRewardsService(unittest.TestCase):
   Their next tier is Tier B and their progress % is 0.50.
   '''
   def test_set_customer_rewards(self):
-      email = "test@test.com"
       req = requests.post(API_URL + "/customer/set_rewards",
               data = {
-                  'email': email,
+                  'email': EMAIL,
                   'order_total': 100.80
               })
 
       customer = req.json()
 
       self.assertEqual(req.status_code, 200)
-      self.assertEqual(customer["email"], "test@test.com")
+      self.assertEqual(customer["email"], EMAIL)
       self.assertEqual(customer["points"], 100)
       self.assertEqual(customer["tier"], "A")
       self.assertEqual(customer["tier_name"], "5% off purchase")
@@ -48,20 +45,21 @@ class TestRewardsService(unittest.TestCase):
       self.assertEqual(customer["next_tier_name"], "10% off purchase")
       self.assertEqual(customer["next_tier_progress"], 0.5)
 
+
   '''
   Round a customer's progress percentage to two digits
   '''
   def test_set_customer_rewards_round_percentage(self):
       req = requests.post(API_URL + "/customer/set_rewards",
               data = {
-                  'email': 'round@test.com',
+                  'email': EMAIL,
                   'order_total': 879.00
               })
 
       customer = req.json()
 
       self.assertEqual(req.status_code, 200)
-      self.assertEqual(customer["email"], "round@test.com")
+      self.assertEqual(customer["email"], EMAIL)
       self.assertEqual(customer["points"], 879)
       self.assertEqual(customer["tier"], "H")
       self.assertEqual(customer["tier_name"], "40% off purchase")
@@ -76,14 +74,14 @@ class TestRewardsService(unittest.TestCase):
   def test_set_customer_rewards_top_tier(self):
       req = requests.post(API_URL + "/customer/set_rewards",
               data = {
-                  'email': 'toptier@test.com',
+                  'email': EMAIL,
                   'order_total': 1200.80
               })
 
       customer = req.json()
 
       self.assertEqual(req.status_code, 200)
-      self.assertEqual(customer["email"], "toptier@test.com")
+      self.assertEqual(customer["email"], EMAIL)
       self.assertEqual(customer["points"], 1200)
       self.assertEqual(customer["tier"], "J")
       self.assertEqual(customer["tier_name"], "50% off purchase")
@@ -98,14 +96,14 @@ class TestRewardsService(unittest.TestCase):
   def test_set_customer_rewards_no_tier(self):
       req = requests.post(API_URL + "/customer/set_rewards",
               data = {
-                  'email': 'notier@test.com',
+                  'email': EMAIL,
                   'order_total': 10.00
               })
 
       customer = req.json()
 
       self.assertEqual(req.status_code, 200)
-      self.assertEqual(customer["email"], "notier@test.com")
+      self.assertEqual(customer["email"], EMAIL)
       self.assertEqual(customer["points"], 10)
       self.assertEqual(customer["tier"], "")
       self.assertEqual(customer["tier_name"], "")
@@ -118,51 +116,40 @@ class TestRewardsService(unittest.TestCase):
   Update an existing customer's rewards data
   '''
   def test_set_existing_customer_rewards(self):
-      email = "existing@test.com"
-      # req = requests.post(API_URL + "/customer/set_rewards",
-      #         data = {
-      #             'email': email,
-      #             'order_total': 100.80
-      #         })
+      # email = "new@test.com"
+      client = MongoClient()
+      db = client['Customers']
+      db.Customers.insert(
+                    { "email" : EMAIL,
+                      "points" : 100,
+                      "tier" : "A",
+                      "tier_name" : "Name",
+                      "next_tier" : "B",
+                      "next_tier_name" : "Tier B Name",
+                      "next_tier_progress" : 0.5 
+                    }
+      )
+      existing_customer = db.Customers.find_one({'email': EMAIL})
 
-      # customer = req.json()
+      self.assertIsNotNone(existing_customer)
 
-      # self.assertEqual(req.status_code, 200)
-      # self.assertEqual(customer["email"], "existing@test.com")
-      # self.assertEqual(customer["points"], 100)
+      req = requests.post(API_URL + "/customer/set_rewards",
+              data = {
+                  'email': EMAIL,
+                  'order_total': 150.40
+              })
 
+      customer = req.json()
+      # db.customers.remove({'email': email})
 
-      # client = MongoClient()
-      # db = client['Customers']
-      # db.Customers.insertOne({"email": email},
-      #               { "email" : email,
-      #                 "points" : 100,
-      #                 "tier" : "A",
-      #                 "tier_name" : "Name",
-      #                 "next_tier" : "B",
-      #                 "next_tier_name" : "Tier B Name",
-      #                 "next_tier_progress" : 0.5 
-      #               }
-      # )
-
-
-      # email = "existing@test.com"
-      # req = requests.post(API_URL + "/customer/set_rewards",
-      #         data = {
-      #             'email': email,
-      #             'order_total': 150.40
-      #         })
-
-      # customer = req.json()
-
-      # self.assertEqual(req.status_code, 200)
-      # self.assertEqual(customer["email"], email)
-      # self.assertEqual(customer["points"], 250)
-      # self.assertEqual(customer["tier"], "B")
-      # self.assertEqual(customer["tier_name"], "10% off purchase")
-      # self.assertEqual(customer["next_tier"], "C")
-      # self.assertEqual(customer["next_tier_name"], "15% off purchase")
-      # self.assertEqual(customer["next_tier_progress"], 0.75)
+      self.assertEqual(req.status_code, 200)
+      self.assertEqual(customer["email"], EMAIL)
+      self.assertEqual(customer["points"], 250)
+      self.assertEqual(customer["tier"], "B")
+      self.assertEqual(customer["tier_name"], "10% off purchase")
+      self.assertEqual(customer["next_tier"], "C")
+      self.assertEqual(customer["next_tier_name"], "15% off purchase")
+      self.assertEqual(customer["next_tier_progress"], 0.83)
 
 
   
@@ -188,17 +175,21 @@ class TestRewardsService(unittest.TestCase):
       pass
 
 
-  # def tearDown(self):
-  #     testing_email = "test@testemail.com"
-  #     # if a record exists for test@testemail.com, remove it
-  #     customer = db[customers].find_one({ email : testing_email })
-  #       if customer != None::
-  #           db.customers.deleteOne( { email: testing_email } )
+  def tearDown(self):
+      # if a record exists for test@testemail.com, remove it
+      client = MongoClient()
+      db = client['Customers']
+      customer = db.Customers.find_one({'email': EMAIL})
+      if customer != None:
+          db.Customers.delete_many({'email': EMAIL})
 
 
   @classmethod
   def tearDownClass(cls):
-      pass
+      client = MongoClient()
+      db = client['Customers']
+      db.Customers.remove()
+
 
 
 if __name__ == '__main__':
