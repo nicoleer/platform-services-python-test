@@ -116,16 +116,15 @@ class TestRewardsService(unittest.TestCase):
   Update an existing customer's rewards data
   '''
   def test_set_existing_customer_rewards(self):
-      # email = "new@test.com"
       client = MongoClient()
       db = client['Customers']
       db.Customers.insert(
                     { "email" : EMAIL,
                       "points" : 100,
                       "tier" : "A",
-                      "tier_name" : "Name",
+                      "tier_name" : "5% off purchase",
                       "next_tier" : "B",
-                      "next_tier_name" : "Tier B Name",
+                      "next_tier_name" : "10% off purchase",
                       "next_tier_progress" : 0.5 
                     }
       )
@@ -140,7 +139,6 @@ class TestRewardsService(unittest.TestCase):
               })
 
       customer = req.json()
-      # db.customers.remove({'email': email})
 
       self.assertEqual(req.status_code, 200)
       self.assertEqual(customer["email"], EMAIL)
@@ -162,14 +160,58 @@ class TestRewardsService(unittest.TestCase):
 
 
   '''
-  Accept a customer's email address, and return the customer's rewards data that was stored in Endpoint 1.
+  Accept a customer's email address, and return the customer's rewards data
   '''
   def test_get_customer_rewards(self):
-      pass
+      client = MongoClient()
+      db = client['Customers']
+      db.Customers.insert(
+                    { "email" : EMAIL,
+                      "points" : 100,
+                      "tier" : "A",
+                      "tier_name" : "5% off purchase",
+                      "next_tier" : "B",
+                      "next_tier_name" : "10% off purchase",
+                      "next_tier_progress" : 0.5 
+                    }
+      )
+      existing_customer = db.Customers.find_one({'email': EMAIL})
+
+      self.assertIsNotNone(existing_customer)
+
+      req = requests.post(API_URL + "/customer/get_rewards",
+              data = {
+                  'email': EMAIL
+              })
+
+      response = req.json()
+
+      self.assertEqual(req.status_code, 200)
+      self.assertEqual(response["email"], EMAIL)
+      self.assertEqual(response["points"], 100)
+      self.assertEqual(response["tier"], "A")
+      self.assertEqual(response["tier_name"], "5% off purchase")
+      self.assertEqual(response["next_tier"], "B")
+      self.assertEqual(response["next_tier_name"], "10% off purchase")
+      self.assertEqual(response["next_tier_progress"], 0.5)
+
+
+  def test_get_customer_rewards_customer_not_found(self):
+      email = "userdoesntexist@test.com"
+      req = requests.post(API_URL + "/customer/get_rewards",
+              data = {
+                  'email': email
+              })
+
+      response = req.json()
+
+      self.assertEqual(req.status_code, 200)
+      self.assertEqual(response['status'], 1)
+      self.assertEqual(response['message'], "No customer found for email address [%s]" % email)
 
 
   '''
-  Return the same rewards data as Endpoint 2 but for all customers.
+  Return rewards data for all customers
   '''
   def test_get_all_customer_rewards(self):
       pass
