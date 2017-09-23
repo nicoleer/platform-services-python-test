@@ -36,11 +36,15 @@ class SetRewardsHandler(tornado.web.RequestHandler):
             return float("{0:.2f}".format(progress))
 
 
-    # TODO(nicole): return errors
     @coroutine
     def post(self):
         email = self.get_argument('email', None)
         order_total = self.get_argument('order_total', None)
+
+        if email == None or order_total == None:
+            self.write({"status": 1, "message": "Invalid parameters"})
+            return
+
         points = int(float(order_total))
 
         # update point total if the customer already exists

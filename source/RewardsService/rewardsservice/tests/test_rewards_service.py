@@ -150,13 +150,28 @@ class TestRewardsService(unittest.TestCase):
       self.assertEqual(customer["next_tier_progress"], 0.83)
 
 
-  
   def test_set_customer_rewards_invalid_email(self):
-      pass
+      req = requests.post(API_URL + "/customer/set_rewards",
+              data = {
+                  'order_total': 100.00
+              })
+
+      response = req.json()
+
+      self.assertEqual(response["status"], 1)
+      self.assertEqual(response["message"], "Invalid parameters")
 
 
   def test_set_customer_rewards_invalid_total(self):
-      pass
+      req = requests.post(API_URL + "/customer/set_rewards",
+              data = {
+                  'email': EMAIL
+              })
+
+      response = req.json()
+
+      self.assertEqual(response["status"], 1)
+      self.assertEqual(response["message"], "Invalid parameters")
 
 
   '''
