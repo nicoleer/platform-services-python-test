@@ -6,9 +6,12 @@ from django.template.response import TemplateResponse
 from django.views.generic.base import TemplateView
 
 from .forms import OrderForm
+from .forms import SearchForm
 
 class RewardsView(TemplateView):
     template_name = 'index.html'
+    rewards = requests.get("http://rewardsservice:7050/rewards").json()
+    search_error = None
 
     def __init__(self, logger=logging.getLogger(__name__)):
         self.logger = logger
@@ -16,11 +19,10 @@ class RewardsView(TemplateView):
     def get(self, request, *args, **kwargs):
         context = self.get_context_data(**kwargs)
 
-        # Display form
-        context["order_form"] = OrderForm()
-
-        rewards_response = requests.get("http://rewardsservice:7050/rewards")
-        context['rewards_data'] = rewards_response.json()
+        # Display forms and rewards information
+        context['order_form'] = OrderForm()
+        context['search_form'] = SearchForm()
+        context['rewards_data'] = self.rewards
 
         all_customers_response = requests.get("http://rewardsservice:7050/customer/get_all")
         context['customer_data'] = all_customers_response.json()
@@ -33,14 +35,38 @@ class RewardsView(TemplateView):
 
 
     def post(self, request, *args, **kwargs):
-        print('request=%r' % request)
-        if request.method == 'POST':
-            order_form = OrderForm(request.POST)
-            if order_form.is_valid():
-                response = requests.post("http://rewardsservice:7050/customer/set_rewards", 
-                              data = { "email" : order_form.cleaned_data['email'], 
-                                       "order_total" : order_form.cleaned_data['order_total'] 
-                                     })
-                print('response=%r' % response.text)
+        context = self.get_context_data(**kwargs)
 
+        if request.method == 'POST':
+            order_form  = OrderForm(request.POST)
+            search_form  = SearchForm(request.POST)
+
+            # handle order form
+            if 'order-button' in request.POST and order_form.is_valid():
+                response = requests.post("http://rewardsservice:7050/customer/set_rewards", 
+                              data = { "email": order_form.cleaned_data['email'], 
+                                       "order_total": order_form.cleaned_data['order_total'] 
+                                     })
                 return HttpResponseRedirect('/rewards')
+
+            # handle search form
+            elif 'search-button' in request.POST and search_form.is_valid():
+                response = requests.post("http://rewardsservice:7050/customer/get_rewards",
+                              data = { "email": search_form.cleaned_data['email']})
+                
+                search_result = response.json()
+                if search_result.get('message', None):
+                    context['search_error'] = {'message': search_result['message']}
+                else:
+                    context['customer_data'] = [search_result]
+
+                # Display forms and rewards info
+                context['order_form'] = OrderForm()
+                context['search_form'] = SearchForm()
+                context['rewards_data'] = self.rewards
+
+                return TemplateResponse(
+                    request,
+                    self.template_name,
+                    context
+                )
